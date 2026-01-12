@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+
+pnpm -s exec tsc --noEmit
+pnpm -s build

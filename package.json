@@ -18,7 +18,9 @@
         "build": "node log.js build & vite build --config vite/config.prod.mjs",
         "dev-nolog": "vite --config vite/config.dev.mjs",
         "build-nolog": "vite build --config vite/config.prod.mjs",
-        "lint": "eslint \"src/**/*.{ts,tsx}\""
+        "lint": "eslint \"src/**/*.{ts,tsx}\"",
+        "postinstall": "git config --local core.hooksPath scripts/hooks",
+        "install-hooks": "sh scripts/install-hooks.sh"
     },
     "devDependencies": {
         "@typescript-eslint/eslint-plugin": "^8.26.0",

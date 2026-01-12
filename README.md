@@ -18,6 +18,11 @@ This template has been updated for:
 
 [Node.js](https://nodejs.org) is required to install dependencies and run scripts via `npm`.
 
+## Git Hooks
+
+This repo uses shared Git hooks from `scripts/hooks`. Running `pnpm install` sets
+`core.hooksPath` automatically so `pre-commit` and `pre-push` run for everyone.
+
 ## Available Commands
 
 | Command | Description |
