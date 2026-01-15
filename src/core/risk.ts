@@ -9,6 +9,7 @@ const UPKEEP_PER_MIN = 2;
 
 export function startRun(state: GameState): GameState {
   const baseUpkeep = state.run.upkeepPerMin > 0 ? state.run.upkeepPerMin : 1;
+  const entryFee = state.run.entryFee;
   const nextRun: RunState = {
     isRunning: true,
     timeSec: 0,
@@ -16,10 +17,10 @@ export function startRun(state: GameState): GameState {
     riskXP: 0,
     riskStack: 0,
     upkeepPerMin: baseUpkeep,
-    entryFee:state.run.entryFee
+    entryFee
   };
 
-  return { ...state, run: nextRun };
+  return { ...state, gold: state.gold - entryFee, run: nextRun };
 }
 
 export function tick(state: GameState, dtSec: number): GameState {
@@ -29,30 +30,39 @@ export function tick(state: GameState, dtSec: number): GameState {
 
   const prevTime = state.run.timeSec;
   const nextTime = prevTime + dtSec;
-  const prevSeconds = Math.floor(prevTime);
-  const nextSeconds = Math.floor(nextTime);
   const prevMinutes = Math.floor(prevTime / SECONDS_PER_MINUTE);
   const nextMinutes = Math.floor(nextTime / SECONDS_PER_MINUTE);
 
   let {safeXP, riskXP, riskStack, upkeepPerMin} = state.run;
+  let gold = state.gold;
 
-  const gold = state.gold;
+  let segmentStart = prevTime;
+  for (let minute = prevMinutes; minute <= nextMinutes; minute += 1) {
+    const minuteStart = minute * SECONDS_PER_MINUTE;
+    const minuteEnd = minuteStart + SECONDS_PER_MINUTE;
+    const segmentEnd = Math.min(nextTime, minuteEnd);
+    const gainedSeconds =
+      Math.max(0, Math.floor(segmentEnd) - Math.floor(segmentStart));
+    if (gainedSeconds > 0 && gold >= 0) {
+      safeXP += gainedSeconds;
+    }
+    if (minute === nextMinutes) {
+      break;
+    }
 
-  if (nextSeconds > prevSeconds && gold > 0) {
-    safeXP += nextSeconds - prevSeconds;
-  }
-
-  for (let minute = prevMinutes + 1; minute <= nextMinutes; minute += 1) {
-    const minuteSeconds = minute * SECONDS_PER_MINUTE;
-    if (minuteSeconds >= RISK_START_SECONDS) {
+    gold -= upkeepPerMin;
+    const nextMinuteStart = minuteEnd;
+    if (nextMinuteStart >= RISK_START_SECONDS && gold >= 0) {
       riskStack += RISK_STACK;
       riskXP += RISK_XP;
       upkeepPerMin *= UPKEEP_PER_MIN;
     }
+    segmentStart = minuteEnd;
   }
 
   return {
     ...state,
+    gold,
     run: {
       ...state.run,
       timeSec: nextTime,

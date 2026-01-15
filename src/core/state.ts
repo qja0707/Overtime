@@ -14,7 +14,17 @@ export type GameState = {
     permanentXP: number;
   };
   run: RunState;
+  farming: {
+    isFarming: boolean;
+    remainingSec: number;
+    rewardGold: number;
+    durationSec: number;
+  };
 };
+
+const DEFAULT_ENTRY_FEE = 1;
+const DEFAULT_FARM_REWARD_GOLD = 100;
+const DEFAULT_FARM_DURATION_SEC = 30;
 
 export const createInitialRunState = (): RunState => ({
   isRunning: false,
@@ -23,7 +33,7 @@ export const createInitialRunState = (): RunState => ({
   riskXP: 0,
   riskStack: 0,
   upkeepPerMin: 0,
-  entryFee: 1
+  entryFee: DEFAULT_ENTRY_FEE
 });
 
 export const createInitialState = (): GameState => ({
@@ -31,7 +41,13 @@ export const createInitialState = (): GameState => ({
   meta: {
     permanentXP: 0
   },
-  run: createInitialRunState()
+  run: createInitialRunState(),
+  farming: {
+    isFarming: false,
+    remainingSec: 0,
+    rewardGold: DEFAULT_FARM_REWARD_GOLD,
+    durationSec: DEFAULT_FARM_DURATION_SEC
+  }
 });
 
 export const isBankrupt = (state: GameState): boolean => state.gold < 0;
