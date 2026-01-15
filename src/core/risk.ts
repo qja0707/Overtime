@@ -15,7 +15,8 @@ export function startRun(state: GameState): GameState {
     safeXP: 0,
     riskXP: 0,
     riskStack: 0,
-    upkeepPerMin: baseUpkeep
+    upkeepPerMin: baseUpkeep,
+    entryFee:state.run.entryFee
   };
 
   return { ...state, run: nextRun };
@@ -35,7 +36,9 @@ export function tick(state: GameState, dtSec: number): GameState {
 
   let {safeXP, riskXP, riskStack, upkeepPerMin} = state.run;
 
-  if (nextSeconds > prevSeconds) {
+  const gold = state.gold;
+
+  if (nextSeconds > prevSeconds && gold > 0) {
     safeXP += nextSeconds - prevSeconds;
   }
 

@@ -6,6 +6,7 @@ import { loadGameState, saveGameState } from '@/core/storage';
 export class MainScene extends Scene {
   private state = initialGameState;
   private hudText!: Phaser.GameObjects.Text;
+  private lastAutosaveMs = 0;
 
   constructor() {
     super('MainScene');
@@ -19,45 +20,85 @@ export class MainScene extends Scene {
       color: '#e6f0ff'
     });
 
-    this.input.keyboard?.on('keydown-S', () => {
+    const startRunAction = () => {
       if (this.state.run.isRunning) {
         return;
       }
       this.state = startRun(this.state);
       saveGameState(this.state);
-    });
+    };
 
-    this.input.keyboard?.on('keydown-E', () => {
+    const escapeRunAction = () => {
       if (!this.state.run.isRunning) {
         return;
       }
       this.state = escapeRun(this.state);
       saveGameState(this.state);
       this.scene.start('MainMenu');
-    });
+    };
 
-    this.input.keyboard?.on('keydown-K', () => {
+    const dieRunAction = () => {
       if (!this.state.run.isRunning) {
         return;
       }
       this.state = dieRun(this.state);
       saveGameState(this.state);
       this.scene.start('MainMenu');
-    });
+    };
+
+    this.add
+      .text(16, 160, 'Start (S)', {
+        fontFamily: 'Courier New, monospace',
+        fontSize: '16px',
+        color: '#e6f0ff'
+      })
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', startRunAction);
+
+    this.add
+      .text(16, 190, 'Escape (E)', {
+        fontFamily: 'Courier New, monospace',
+        fontSize: '16px',
+        color: '#e6f0ff'
+      })
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', escapeRunAction);
+
+    this.add
+      .text(16, 220, 'Die (K)', {
+        fontFamily: 'Courier New, monospace',
+        fontSize: '16px',
+        color: '#e6f0ff'
+      })
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', dieRunAction);
+
+    this.input.keyboard?.on('keydown-S', startRunAction);
+    this.input.keyboard?.on('keydown-E', escapeRunAction);
+    this.input.keyboard?.on('keydown-K', dieRunAction);
   }
 
-  update(_time: number, delta: number): void {
+  update(time: number, delta: number): void {
     this.state = tick(this.state, delta / 1000);
+    if (this.state.run.isRunning && time - this.lastAutosaveMs >= 5000) {
+      saveGameState(this.state);
+      this.lastAutosaveMs = time;
+    }
 
     const { run, meta } = this.state;
-    this.hudText.setText([
+    const lines = [
       `Survival Time: ${formatTime(run.timeSec)}`,
+      `Gold: ${this.state.gold}`,
       `Safe XP: ${run.safeXP}`,
       `Risk XP: ${run.riskXP}`,
       `Risk Stack: ${run.riskStack}`,
       `Upkeep / Min: ${run.upkeepPerMin}`,
       `Permanent XP: ${meta.permanentXP}`
-    ]);
+    ];
+    if (this.state.gold < 0) {
+      lines.unshift('⚠ Bankrupt: Safe/Risk gains frozen');
+    }
+    this.hudText.setText(lines);
   }
 }
 
